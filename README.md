@@ -2,9 +2,116 @@
 
 Tiny Go webserver that prints OS information and HTTP request to output.
 
-This project is inspired from the [Traefik whoami](https://github.com/traefik/whoami/) service. I'm planning on upgrading the functionality of this servide to include extra handy features. 
+This project is inspired from the [Traefik whoami](https://github.com/traefik/whoami/) service. I'm planning on upgrading the functionality of this service to include more features. 
 
-## Usage
+## Deploy
+
+### Directly exposed to the internet
+
+#### As a binary
+
+Download the latest version from the [releases](https://github.com/egbertp/whoami/releases/) page. 
+
+This example downloads the latest version for `Linux` on `amd64` architecture
+
+```shell
+$ curl -L -O https://github.com/egbertp/whoami/releases/download/v1.0.2/whoami_1.0.2_checksums.txt
+$ curl -L -O https://github.com/egbertp/whoami/releases/download/v1.0.2/whoami_v1.0.2_linux_amd64.tar.gz
+```
+
+```shell
+$ shasum -c whoami_1.0.2_checksums.txt
+
+whoami_v1.0.2_linux_amd64.tar.gz: OK
+```
+
+```shell
+$ tar -xzvf whoami_v1.0.2_linux_amd64.tar.gz
+```
+
+```shell
+$ ./whoami -name whoami-service -port 5678
+```
+
+Check if the service is responsive
+
+```shell
+$ curl http://localhost:5678
+Name: whoami-service
+Hostname: Macbook.local
+IP: 127.0.0.1
+IP: ::1
+IP: fe80::1
+RemoteAddr: [::1]:63065
+GET / HTTP/1.1
+Host: localhost:5678
+User-Agent: curl/8.7.1
+Accept: */*
+```
+
+#### As a docker container
+
+```shell
+$ docker run -d -P --name whoami-container ghcr.io/egbertp/whoami:latest
+```
+
+```shell
+$ docker inspect --format '{{ .NetworkSettings.Ports }}'  whoami-container
+map[80/tcp:[{0.0.0.0 55001}]]
+```
+
+```shell
+$ curl http://0.0.0.0:55001
+Hostname: d6cabf2879f0
+IP: 127.0.0.1
+IP: ::1
+IP: 172.17.0.2
+RemoteAddr: 172.17.0.1:55758
+GET / HTTP/1.1
+Host: 0.0.0.0:55001
+User-Agent: curl/8.7.1
+Accept: */*
+```
+
+```shell
+$ docker logs -f whoami-container
+
+2025/04/21 20:26:26 Starting up on port 80
+```
+
+
+### Behind a reverse proxy like [`Traefik`](https://traefik.io/traefik/)
+
+Create a Docker compose file `compose.yaml`
+
+```yaml
+services:
+  whoami:
+    image: "ghcr.io/egbertp/whoami"
+    container_name: "whoami-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami-http.entrypoints=web"
+      - "traefik.http.routers.whoami-http.rule=Host(`whoami-service.knutsel.space`)"
+      - "traefik.http.routers.whoami-http.middlewares=whoami-https"
+      - "traefik.http.middlewares.whoami-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.rule=Host(`whoami-service.knutsel.space`)"
+      - "traefik.http.routers.whoami.tls=true"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+```
+
+Start the service using
+```shell
+docker compose up
+
+[+] Running 1/1
+ ✔ Container whoami-service  Created                                                                                                                                                                          0.0s
+Attaching to whoami-service
+whoami-service  | 2025/04/21 20:29:05 Starting up on port 80
+```
+
+## Usage of endpoints
 
 ### Paths
 
@@ -55,77 +162,14 @@ Heath check.
 | `name`    | `WHOAMI_NAME`        | Give me a name.                         |
 | `verbose` |                      | Enable verbose logging.                 |
 
-## Examples
 
-```shell
-$ docker run -it --rm egbertp/whoami:latest
-```
-
-```shell
-$ docker run -d -P --name whoami-container egbertp/whoami:latest
-$ docker logs -f whoami-container
-```
-
-```console
-$ docker inspect --format '{{ .NetworkSettings.Ports }}'  whoami-container
-map[80/tcp:[{0.0.0.0 55000}]]
-
-$ curl "http://0.0.0.0:55000"
-Hostname: 2ca96f23e748
-IP: 127.0.0.1
-IP: ::1
-IP: 172.17.0.2
-RemoteAddr: 172.17.0.1:63298
-GET / HTTP/1.1
-Host: 0.0.0.0:55000
-User-Agent: curl/8.7.1
-Accept: */*
-```
-
-```shell
-# calls the health check
-curl -v http://localhost:55000/health
-* Host localhost:55000 was resolved.
-* IPv6: ::1
-* IPv4: 127.0.0.1
-*   Trying [::1]:55000...
-* Connected to localhost (::1) port 55000
-> GET /health HTTP/1.1
-> Host: localhost:55000
-> User-Agent: curl/8.7.1
-> Accept: */*
->
-* Request completely sent off
-< HTTP/1.1 200 OK
-< Date: Mon, 21 Apr 2025 15:42:42 GMT
-< Content-Length: 0
-<
-* Connection #0 to host localhost left intact
-```
 
 ```shell
 # updates health check status
-$ curl -X POST -d '500' http://localhost:80/health
+$ curl -X POST -d '500' http://localhost:55001/health
 ```
 
-```console
-docker run -d -P -v ./certs:/certs --name whoami-service egbertp/whoami --cert /certs/example.cert --key /certs/example.key
-```
-
-```yml
-version: '3.9'
-
-services:
-  whoami:
-    image: egbertp/whoami
-    command:
-       # It tells whoami to start listening on 2001 instead of 80
-       - --port=2001
-       - --name=iamfoo
-```
-
-
-## Developing
+## Development
 
 #### Test / Test coverage
 
@@ -166,7 +210,7 @@ golangci-lint run
 ```shell
 $ make image
 
-docker build -t egbertp/whoami .
+docker build -t ghcr.io/egbertp/whoami .
 [+] Building 13.7s (16/16) FINISHED                                                  docker:desktop-linux
  => [internal] load build definition from Dockerfile                                                 0.0s
  => => transferring dockerfile: 650B                                                                 0.0s
@@ -204,7 +248,7 @@ docker build -t egbertp/whoami .
  => exporting to image                                                                               0.0s
  => => exporting layers                                                                              0.0s
  => => writing image sha256:0c298c77f287b7b0db9b12588e0ff10ef977ebbf049087fa376acca6bfe3321b         0.0s
- => => naming to docker.io/egbertp/whoami                                                            0.0s
+ => => naming to ghcr.io/egbertp/whoami                                                              0.0s
 
  1 warning found (use docker --debug to expand):
  - FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 1)

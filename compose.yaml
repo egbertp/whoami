@@ -1,0 +1,14 @@
+services:
+  whoami:
+    image: "ghcr.io/egbertp/whoami"
+    container_name: "whoami-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami-http.entrypoints=web"
+      - "traefik.http.routers.whoami-http.rule=Host(`whoami-service.knutsel.space`)"
+      - "traefik.http.routers.whoami-http.middlewares=whoami-https"
+      - "traefik.http.middlewares.whoami-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.rule=Host(`whoami-service.knutsel.space`)"
+      - "traefik.http.routers.whoami.tls=true"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
