@@ -1,0 +1,142 @@
+project_name: whoami
+
+builds:
+  - binary: whoami
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - '7'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^doc:'
+      - '^chore:'
+      - '^chore(deps):'
+      - '^test:'
+      - '^tests:'
+
+archives:
+  - id: whoami
+    name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm}}v{{ .Arm }}{{ end }}'
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+
+docker_manifests:
+  - name_template: 'egbertp/whoami:{{ .Tag }}'
+    image_templates:
+      - 'egbertp/whoami:{{ .Tag }}-amd64'
+      - 'egbertp/whoami:{{ .Tag }}-arm64'
+      - 'egbertp/whoami:{{ .Tag }}-armv7'
+  - name_template: 'egbertp/whoami:latest'
+    image_templates:
+      - 'egbertp/whoami:{{ .Tag }}-amd64'
+      - 'egbertp/whoami:{{ .Tag }}-arm64'
+      - 'egbertp/whoami:{{ .Tag }}-armv7'
+  - name_template: 'egbertp/whoami:v{{ .Major }}.{{ .Minor }}'
+    image_templates:
+      - 'egbertp/whoami:v{{ .Major }}.{{ .Minor }}-amd64'
+      - 'egbertp/whoami:v{{ .Major }}.{{ .Minor }}-arm64'
+      - 'egbertp/whoami:v{{ .Major }}.{{ .Minor }}-armv7'
+
+  - name_template: 'ghcr.io/egbertp/whoami:{{ .Tag }}'
+    image_templates:
+      - 'ghcr.io/egbertp/whoami:{{ .Tag }}-amd64'
+      - 'ghcr.io/egbertp/whoami:{{ .Tag }}-arm64'
+      - 'ghcr.io/egbertp/whoami:{{ .Tag }}-armv7'
+  - name_template: 'ghcr.io/egbertp/whoami:latest'
+    image_templates:
+      - 'ghcr.io/egbertp/whoami:{{ .Tag }}-amd64'
+      - 'ghcr.io/egbertp/whoami:{{ .Tag }}-arm64'
+      - 'ghcr.io/egbertp/whoami:{{ .Tag }}-armv7'
+  - name_template: 'ghcr.io/egbertp/whoami:v{{ .Major }}.{{ .Minor }}'
+    image_templates:
+      - 'ghcr.io/egbertp/whoami:v{{ .Major }}.{{ .Minor }}-amd64'
+      - 'ghcr.io/egbertp/whoami:v{{ .Major }}.{{ .Minor }}-arm64'
+      - 'ghcr.io/egbertp/whoami:v{{ .Major }}.{{ .Minor }}-armv7'
+
+dockers:
+  - use: buildx
+    goos: linux
+    goarch: amd64
+    dockerfile: buildx.Dockerfile
+    image_templates:
+      - 'egbertp/whoami:latest-amd64'
+      - 'egbertp/whoami:{{ .Tag }}-amd64'
+      - 'egbertp/whoami:v{{ .Major }}.{{ .Minor }}-amd64'
+      - 'ghcr.io/egbertp/whoami:latest-amd64'
+      - 'ghcr.io/egbertp/whoami:{{ .Tag }}-amd64'
+      - 'ghcr.io/egbertp/whoami:v{{ .Major }}.{{ .Minor }}-amd64'
+    build_flag_templates:
+      - '--pull'
+      # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
+      - '--label=org.opencontainers.image.title={{.ProjectName}}'
+      - '--label=org.opencontainers.image.description=Tiny Go webserver that prints OS information and HTTP request to output'
+      - '--label=org.opencontainers.image.source={{.GitURL}}'
+      - '--label=org.opencontainers.image.url={{.GitURL}}'
+      - '--label=org.opencontainers.image.documentation={{.GitURL}}'
+      - '--label=org.opencontainers.image.created={{.Date}}'
+      - '--label=org.opencontainers.image.revision={{.FullCommit}}'
+      - '--label=org.opencontainers.image.version={{.Version}}'
+      - '--platform=linux/amd64'
+
+  - use: buildx
+    goos: linux
+    goarch: arm64
+    dockerfile: buildx.Dockerfile
+    image_templates:
+      - 'egbertp/whoami:latest-arm64'
+      - 'egbertp/whoami:{{ .Tag }}-arm64'
+      - 'egbertp/whoami:v{{ .Major }}.{{ .Minor }}-arm64'
+      - 'ghcr.io/egbertp/whoami:latest-arm64'
+      - 'ghcr.io/egbertp/whoami:{{ .Tag }}-arm64'
+      - 'ghcr.io/egbertp/whoami:v{{ .Major }}.{{ .Minor }}-arm64'
+    build_flag_templates:
+      - '--pull'
+      # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
+      - '--label=org.opencontainers.image.title={{.ProjectName}}'
+      - '--label=org.opencontainers.image.description=Tiny Go webserver that prints OS information and HTTP request to output'
+      - '--label=org.opencontainers.image.source={{.GitURL}}'
+      - '--label=org.opencontainers.image.url={{.GitURL}}'
+      - '--label=org.opencontainers.image.documentation={{.GitURL}}'
+      - '--label=org.opencontainers.image.created={{.Date}}'
+      - '--label=org.opencontainers.image.revision={{.FullCommit}}'
+      - '--label=org.opencontainers.image.version={{.Version}}'
+      - '--platform=linux/arm64'
+
+  - use: buildx
+    goos: linux
+    goarch: arm
+    goarm: '7'
+    dockerfile: buildx.Dockerfile
+    image_templates:
+      - 'egbertp/whoami:latest-armv7'
+      - 'egbertp/whoami:{{ .Tag }}-armv7'
+      - 'egbertp/whoami:v{{ .Major }}.{{ .Minor }}-armv7'
+      - 'ghcr.io/egbertp/whoami:latest-armv7'
+      - 'ghcr.io/egbertp/whoami:{{ .Tag }}-armv7'
+      - 'ghcr.io/egbertp/whoami:v{{ .Major }}.{{ .Minor }}-armv7'
+    build_flag_templates:
+      - '--pull'
+      # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
+      - '--label=org.opencontainers.image.title={{.ProjectName}}'
+      - '--label=org.opencontainers.image.description=Tiny Go webserver that prints OS information and HTTP request to output'
+      - '--label=org.opencontainers.image.source={{.GitURL}}'
+      - '--label=org.opencontainers.image.url={{.GitURL}}'
+      - '--label=org.opencontainers.image.documentation={{.GitURL}}'
+      - '--label=org.opencontainers.image.created={{.Date}}'
+      - '--label=org.opencontainers.image.revision={{.FullCommit}}'
+      - '--label=org.opencontainers.image.version={{.Version}}'
+      - '--platform=linux/arm/v7'
