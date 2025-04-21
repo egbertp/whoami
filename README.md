@@ -2,7 +2,7 @@
 
 Tiny Go webserver that prints OS information and HTTP request to output.
 
-This project is inspired from the [Traefik whoami](https://github.com/traefik/whoami/) service. I'm planning on upgrading the functionality of thi servide to include extra handy features. 
+This project is inspired from the [Traefik whoami](https://github.com/traefik/whoami/) service. I'm planning on upgrading the functionality of this servide to include extra handy features. 
 
 ## Usage
 
